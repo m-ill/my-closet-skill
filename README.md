@@ -21,7 +21,7 @@ https://github.com/m-ill/my-closet-skill 이 주소로 내 옷장 접속해줘
 옷장 데이터는 **내 컴퓨터(또는 내 비서의 서버)에만** 저장됩니다. 가입도, 서버도, 요금도 없어요.
 
 [![tests](https://github.com/m-ill/my-closet-skill/actions/workflows/test.yml/badge.svg)](https://github.com/m-ill/my-closet-skill/actions/workflows/test.yml)
-![python](https://img.shields.io/badge/python-3.9%2B-blue) ![deps](https://img.shields.io/badge/dependencies-none-brightgreen) ![license](https://img.shields.io/badge/license-MIT-lightgrey)
+![python](https://img.shields.io/badge/python-3.10%2B-blue) ![deps](https://img.shields.io/badge/dependencies-none-brightgreen) ![license](https://img.shields.io/badge/license-MIT-lightgrey)
 
 ---
 

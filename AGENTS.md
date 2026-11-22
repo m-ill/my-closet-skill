@@ -15,7 +15,7 @@ agents can). Ask before installing only if your own rules require it.
    `~/.hermes/skills`), copy or link the folder there so it loads automatically next time.
 
 2. **Check it works**: `python3 ~/.my-closet/skill/scripts/closet.py status`
-   (use `python` if `python3` is missing; Python 3.9+ with no extra packages).
+   (use `python` if `python3` is missing; Python 3.10+ with no extra packages).
 
 3. **Show the `guide`** from that output to the user exactly as printed, then follow [SKILL.md](SKILL.md)
    for everything after that.
