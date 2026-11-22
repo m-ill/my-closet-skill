@@ -10,6 +10,7 @@ the text it extracted, in a SQLite file on the user's own machine. Standard libr
   python closet.py remove 3
   python closet.py export [--format json|csv]
   python closet.py pref [key [value]]      (city, timezone, morning_time, style, body, notes)
+  python closet.py outfit 3 7 12            (chosen garments + product photo searches)
 
 Every command prints one JSON object. Exit code 0 means it worked; anything else
 means nothing was saved, and the assistant must say so.
@@ -208,6 +209,31 @@ def cmd_pref(con, args):
     return {"ok": True, "prefs": prefs, "keys": list(PREFS)}
 
 
+def cmd_outfit(con, args):
+    """The chosen garments plus, for each, the web search to run for its real product photo."""
+    rows = []
+    for no in args.no:
+        row = con.execute("SELECT * FROM garments WHERE no = ? AND removed_at IS NULL", (no,)).fetchone()
+        if row is None:
+            raise Invalid(f"#{no} is not in the closet. Use only numbers from list.")
+        rows.append(item(row))
+    for r in rows:
+        f = r["fields"]
+        category_en = f.get("category", "").replace("_", " ")
+        if f.get("brand") and f.get("sku"):
+            r["photo_search"] = f'{f["brand"]} {f["sku"]} {f.get("product") or category_en}'.strip()
+        elif f.get("brand") or f.get("product"):
+            r["photo_search"] = " ".join(x for x in [f.get("brand"), f.get("product"), f.get("color"), category_en] if x)
+        else:
+            r["photo_search"] = None  # no label: use the user's own description, never a stranger's photo as "theirs"
+    prefs = {p["key"]: p["value"] for p in con.execute("SELECT key, value FROM prefs")}
+    return {"ok": True, "garments": rows, "prefs": prefs, "steps": [
+        "For every garment with photo_search, search the web and SHOW the product photo in your reply (mark '참고 이미지' if unsure it is the same item).",
+        "Then GENERATE ONE outfit image with your image tool from those photos (and the user's photo only if given in this conversation). Label it '예시 이미지'.",
+        "If you have no web search or no image tool, say exactly which one is missing. Never skip silently.",
+        "End with the menu."]}
+
+
 def cmd_export(con, args):
     rows = [item(r) for r in con.execute("SELECT * FROM garments WHERE removed_at IS NULL ORDER BY no").fetchall()]
     if args.format == "csv":
@@ -233,8 +259,9 @@ def main(argv=None):
     p = sub.add_parser("remove"); p.add_argument("no", type=int)
     p = sub.add_parser("export"); p.add_argument("--format", choices=["json", "csv"], default="json")
     p = sub.add_parser("pref"); p.add_argument("key", nargs="?"); p.add_argument("value", nargs="?")
+    p = sub.add_parser("outfit"); p.add_argument("no", type=int, nargs="+")
     args = parser.parse_args(argv)
-    commands = {"status": cmd_status, "list": cmd_list, "add": cmd_add, "remove": cmd_remove, "export": cmd_export, "pref": cmd_pref}
+    commands = {"status": cmd_status, "list": cmd_list, "add": cmd_add, "remove": cmd_remove, "export": cmd_export, "pref": cmd_pref, "outfit": cmd_outfit}
     try:
         con = connect()
         try:

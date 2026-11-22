@@ -81,16 +81,34 @@ python3 scripts/closet.py add '{"kind":"visual","fields":{"category":"jacket","c
   Keys: `city` (for weather), `timezone` (e.g. Asia/Seoul), `morning_time` (HH:MM), `style`, `body` (e.g. "180cm, 보통 체형"), `notes`.
   Save only what the user tells you. Never store face or body photos.
 
-## 오늘 뭐 입지? · Outfit
+## 오늘 뭐 입지? · Outfit — 사진이 핵심입니다
 
-1. Run `list` and use **only** listed garments. Never add clothes the user does not own.
-2. Weather: use `pref city` with your weather/web tool. If you have neither, ask the user or skip it.
-3. Pick one outfit (top · bottom · outer if needed), say why in one line (weather, plans, `style`).
-4. Photos: for garments with a brand and `sku`, search the web for the real product photo. If you are not sure
-   it is the same product, label it "참고 이미지".
-5. Outfit image: if you can generate images, combine those product photos into one outfit picture. If the user has
-   given you a face/body photo **in this conversation**, you may use it for a try-on picture; do not keep it.
-   Always say the picture is an example — it does not show real fit. Without an image tool, send the text outfit.
+Any outfit request ("오늘 뭐 입지?", "내일 아침 코디", a test run, or the scheduled morning run) **must end in
+pictures**, not just text. A text-only outfit is an incomplete answer. Do all steps, in order:
+
+1. `list` → choose **only** listed garments (top · bottom · outer if needed). Never add clothes the user does not own.
+2. Weather: `pref` → look up the weather for `city` with your weather/web tool. If you cannot, say so and ask.
+3. `python3 scripts/closet.py outfit <no> <no> ...` with the chosen numbers. It returns a `photo_search` for each garment.
+4. **Product photos (required):** run a web image search for every `photo_search` and **put the photo in your reply**
+   (image or direct image link). If you are not sure it is the same item, label it "참고 이미지".
+5. **Outfit image (required when you have an image tool):** call your image-generation tool **now** and make one
+   picture of the whole outfit from those product photos. If the user gave a face/body photo in this conversation,
+   you may use it for a try-on picture; never keep it. Label the result "예시 이미지 · 실제 핏과 다를 수 있어요".
+   Do not describe the picture instead of making it, and do not ask "이미지도 만들어 드릴까요?" — just make it.
+6. If a tool is missing, say exactly which one in one line (e.g. "이미지 생성 도구가 없어서 사진 합성은 못 했어요").
+   Never skip a step silently.
+
+Reply in this shape:
+
+```
+👗 오늘의 코디 (11/23 · 죽전 0°C, 오후 소나기)
+[예시 이미지: 코디 합성 사진]
+#12 COS 패딩 재킷 — [상품 사진]
+#7  유니클로 브라운 3D 니트 (490692) — [상품 사진]
+#3  유니클로 바지 (321-455492) — [상품 사진]
+이유: 아침 0°C라 패딩, 실내에선 니트만으로 충분. 우산 챙기세요.
+(메뉴)
+```
 
 ## 매일 아침 추천 · Morning outfit
 
@@ -98,8 +116,9 @@ When the user asks for it ("매일 아침 7시에 코디 추천해줘"):
 
 1. Save `pref morning_time 07:00` and `pref timezone ...` (ask for the city if `city` is empty).
 2. Create a recurring task with **your own scheduler** (cron, heartbeat, scheduled task, reminder — whatever your
-   platform has) that runs this skill's "오늘 뭐 입지?" steps above every day at that time and sends the result
-   (outfit text, product photos, and the outfit image when possible) to the user's usual channel.
+   platform has) that runs **all six "오늘 뭐 입지?" steps above** every day at that time and sends the result —
+   the outfit image, the product photos and the text — to the user's usual channel. Write those six steps into the
+   task's own instructions so the morning run does not fall back to text only.
 3. Tell the user exactly what was scheduled and how to stop it. If your platform cannot run scheduled tasks or send
    messages on its own, say so plainly and do not claim it is scheduled.
 

@@ -106,6 +106,18 @@ class ClosetTest(unittest.TestCase):
         code, _ = run("add", json.dumps({"kind": "label", "fields": {"brand": "A\u202eB"}}))
         self.assertEqual(code, 2)
 
+    def test_outfit_gives_photo_searches_and_required_steps(self):
+        run("add", json.dumps([
+            {"kind": "label", "fields": {"brand": "UNIQLO", "sku": "321-455492", "category": "trousers"}},
+            {"kind": "label", "fields": {"brand": "COS", "category": "jacket"}},
+            {"kind": "visual", "fields": {"category": "blazer", "color": "gray"}},
+        ]))
+        code, out = run("outfit", "1", "2", "3")
+        self.assertEqual(code, 0)
+        self.assertEqual([g["photo_search"] for g in out["garments"]], ["UNIQLO 321-455492 trousers", "COS jacket", None])
+        self.assertTrue(any("GENERATE ONE outfit image" in s for s in out["steps"]))
+        self.assertEqual(run("outfit", "9")[0], 2)
+
 
 if __name__ == "__main__":
     unittest.main()

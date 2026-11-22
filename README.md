@@ -67,6 +67,7 @@ python3 scripts/closet.py list
 | `remove <번호>` | 옷 지우기 (번호는 재사용 안 함) |
 | `export [--format csv\|json]` | 내보내기 |
 | `pref [키 [값]]` | 아침 추천용 설정: city · timezone · morning_time · style · body · notes |
+| `outfit <번호...>` | 고른 옷 + 상품 사진 검색어 (코디 사진 만들 때 사용) |
 
 다른 위치에 저장하려면 `MY_CLOSET_DB=/path/closet.db`.
 
