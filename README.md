@@ -13,11 +13,12 @@ https://github.com/m-ill/my-closet-skill 이 주소로 내 옷장 접속해줘
 1. 라벨 올리기 — 옷 라벨(택) 사진을 보내주세요
 2. 내 옷장 보기
 3. 사진 찍어 올리기 — 라벨 없는 옷은 옷 전체 사진
-4. 설정 — 옷 지우기 · 내보내기 · 코디 추천("오늘 뭐 입지?")
+4. 설정 — 아침 추천 예약 · 옷 지우기 · 내보내기 · 코디 추천("오늘 뭐 입지?")
 ```
 
 라벨 사진을 보내면 AI가 브랜드·품번·사이즈를 읽어 **묻지 않고 바로 저장**하고,
-"오늘 뭐 입지?"라고 물으면 **내가 실제로 가진 옷으로만** 코디를 짜 줍니다.
+"오늘 뭐 입지?"라고 물으면 **내가 실제로 가진 옷으로만** 코디를 짜고, 품번으로 찾은 실제 상품 사진을 합성해 착장 이미지로 보여줍니다.
+"매일 아침 7시에 추천해줘"라고 하면 비서의 예약 기능으로 **매일 아침 날씨에 맞는 코디 사진**을 보내 줍니다.
 옷장 데이터는 **내 컴퓨터(또는 내 비서의 서버)에만** 저장됩니다. 가입도, 서버도, 요금도 없어요.
 
 [![tests](https://github.com/m-ill/my-closet-skill/actions/workflows/test.yml/badge.svg)](https://github.com/m-ill/my-closet-skill/actions/workflows/test.yml)
@@ -29,7 +30,7 @@ https://github.com/m-ill/my-closet-skill 이 주소로 내 옷장 접속해줘
 
 | 하는 일 | 누가 |
 |---|---|
-| 사진·라벨 읽기, 코디 생각, 상품 사진 찾기, 착장 이미지 | **당신의 AI 비서** (이미 가진 능력) |
+| 사진·라벨 읽기, 코디 생각, 날씨 확인, 상품 사진 찾기, 착장 이미지 합성, 매일 아침 예약 | **당신의 AI 비서** (이미 가진 능력) |
 | 읽은 정보를 검사하고 번호·날짜 붙여 저장 | **이 스킬** (`scripts/closet.py`, Python 표준 라이브러리만) |
 | 데이터 보관 | **내 컴퓨터** `~/.my-closet/closet.db` (SQLite 파일 하나) |
 
@@ -65,6 +66,7 @@ python3 scripts/closet.py list
 | `list [--limit N]` | 최근 옷부터 목록 |
 | `remove <번호>` | 옷 지우기 (번호는 재사용 안 함) |
 | `export [--format csv\|json]` | 내보내기 |
+| `pref [키 [값]]` | 아침 추천용 설정: city · timezone · morning_time · style · body · notes |
 
 다른 위치에 저장하려면 `MY_CLOSET_DB=/path/closet.db`.
 

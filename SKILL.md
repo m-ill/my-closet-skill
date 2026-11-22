@@ -77,9 +77,31 @@ python3 scripts/closet.py add '{"kind":"visual","fields":{"category":"jacket","c
 
 - Remove a garment: `python3 scripts/closet.py remove <no>` (its number is never reused).
 - Export: `python3 scripts/closet.py export --format csv` (or `json`).
-- Outfit ("오늘 뭐 입지?"): run `list` first and use **only** listed garments. Ask for weather/plans if unknown.
-  For garments with a brand and product code you may search the web for the real product photo; if you are
-  not sure it is the same product, label it "참고 이미지". If the user wants, make an outfit image from them.
+- Settings: `python3 scripts/closet.py pref` shows them; `pref <key> <value>` sets one, `pref <key> ""` clears it.
+  Keys: `city` (for weather), `timezone` (e.g. Asia/Seoul), `morning_time` (HH:MM), `style`, `body` (e.g. "180cm, 보통 체형"), `notes`.
+  Save only what the user tells you. Never store face or body photos.
+
+## 오늘 뭐 입지? · Outfit
+
+1. Run `list` and use **only** listed garments. Never add clothes the user does not own.
+2. Weather: use `pref city` with your weather/web tool. If you have neither, ask the user or skip it.
+3. Pick one outfit (top · bottom · outer if needed), say why in one line (weather, plans, `style`).
+4. Photos: for garments with a brand and `sku`, search the web for the real product photo. If you are not sure
+   it is the same product, label it "참고 이미지".
+5. Outfit image: if you can generate images, combine those product photos into one outfit picture. If the user has
+   given you a face/body photo **in this conversation**, you may use it for a try-on picture; do not keep it.
+   Always say the picture is an example — it does not show real fit. Without an image tool, send the text outfit.
+
+## 매일 아침 추천 · Morning outfit
+
+When the user asks for it ("매일 아침 7시에 코디 추천해줘"):
+
+1. Save `pref morning_time 07:00` and `pref timezone ...` (ask for the city if `city` is empty).
+2. Create a recurring task with **your own scheduler** (cron, heartbeat, scheduled task, reminder — whatever your
+   platform has) that runs this skill's "오늘 뭐 입지?" steps above every day at that time and sends the result
+   (outfit text, product photos, and the outfit image when possible) to the user's usual channel.
+3. Tell the user exactly what was scheduled and how to stop it. If your platform cannot run scheduled tasks or send
+   messages on its own, say so plainly and do not claim it is scheduled.
 
 ## Privacy
 

@@ -90,6 +90,22 @@ class ClosetTest(unittest.TestCase):
         _, out = run("export")
         self.assertEqual(out["items"][0]["fields"]["category"], "coat")
 
+    def test_morning_settings(self):
+        code, out = run("pref", "morning_time", "07:00")
+        self.assertEqual((code, out["prefs"]), (0, {"morning_time": "07:00"}))
+        run("pref", "city", "Seoul")
+        self.assertEqual(run("pref")[1]["prefs"], {"city": "Seoul", "morning_time": "07:00"})
+        self.assertEqual(run("pref", "morning_time", "25:00")[0], 2)
+        self.assertEqual(run("pref", "face_photo", "x")[0], 2)
+        self.assertEqual(run("pref", "notes", "https://evil.example")[0], 2)
+        run("pref", "city", "")
+        self.assertEqual(run("pref")[1]["prefs"], {"morning_time": "07:00"})
+        self.assertIn("아침 추천", run("status")[1]["guide"])
+
+    def test_hidden_direction_characters_are_refused(self):
+        code, _ = run("add", json.dumps({"kind": "label", "fields": {"brand": "A\u202eB"}}))
+        self.assertEqual(code, 2)
+
 
 if __name__ == "__main__":
     unittest.main()

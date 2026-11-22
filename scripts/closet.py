@@ -9,6 +9,7 @@ the text it extracted, in a SQLite file on the user's own machine. Standard libr
   python closet.py add '{"kind":"label","fields":{"brand":"UNIQLO","size":"L"}}'
   python closet.py remove 3
   python closet.py export [--format json|csv]
+  python closet.py pref [key [value]]      (city, timezone, morning_time, style, body, notes)
 
 Every command prints one JSON object. Exit code 0 means it worked; anything else
 means nothing was saved, and the assistant must say so.
@@ -48,9 +49,9 @@ MENU = [
     "1. 라벨 올리기 — 옷 라벨(택) 사진을 보내주세요",
     "2. 내 옷장 보기",
     "3. 사진 찍어 올리기 — 라벨 없는 옷은 옷 전체 사진",
-    "4. 설정 — 옷 지우기 · 내보내기 · 코디 추천(\"오늘 뭐 입지?\")",
+    "4. 설정 — 아침 추천 예약 · 옷 지우기 · 내보내기 · 코디 추천(\"오늘 뭐 입지?\")",
 ]
-CONTROL = re.compile(r"[\u0000-\u001f\u007f-\u009f‪-‮⁦-⁩]")
+CONTROL = re.compile(r"[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]")
 UNSAFE = re.compile(r"[<>]|(?:https?|ftp|file|javascript|data):|(?:^|\s)www\.", re.I)
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS garments (
@@ -61,7 +62,10 @@ CREATE TABLE IF NOT EXISTS garments (
   created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%S','now')),
   removed_at  TEXT                                -- removal keeps the row, so numbers stay unique
 );
+CREATE TABLE IF NOT EXISTS prefs (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL);
 """
+# Settings the assistant needs for outfits and the morning recommendation. Text only; never photos.
+PREFS = {"city": 60, "timezone": 40, "morning_time": 5, "style": 200, "body": 120, "notes": 300}
 
 
 class Invalid(Exception):
@@ -186,6 +190,24 @@ def cmd_remove(con, args):
     return {"ok": True, "removed": args.no, "garment_count": count(con), "note": "번호는 다시 쓰지 않아요."}
 
 
+def cmd_pref(con, args):
+    if args.key is not None:
+        if args.key not in PREFS:
+            raise Invalid("setting must be one of: " + " ".join(PREFS))
+        value = (args.value or "").strip()
+        if args.key == "morning_time" and value and not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", value):
+            raise Invalid("morning_time is HH:MM, e.g. 07:00.")
+        if value and (len(value) > PREFS[args.key] or CONTROL.search(value) or UNSAFE.search(value)):
+            raise Invalid(f"{args.key} must be short plain text.")
+        with con:
+            if value:
+                con.execute("INSERT INTO prefs (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value", (args.key, value))
+            else:
+                con.execute("DELETE FROM prefs WHERE key = ?", (args.key,))
+    prefs = {r["key"]: r["value"] for r in con.execute("SELECT key, value FROM prefs ORDER BY key")}
+    return {"ok": True, "prefs": prefs, "keys": list(PREFS)}
+
+
 def cmd_export(con, args):
     rows = [item(r) for r in con.execute("SELECT * FROM garments WHERE removed_at IS NULL ORDER BY no").fetchall()]
     if args.format == "csv":
@@ -210,8 +232,9 @@ def main(argv=None):
     p = sub.add_parser("add"); p.add_argument("json")
     p = sub.add_parser("remove"); p.add_argument("no", type=int)
     p = sub.add_parser("export"); p.add_argument("--format", choices=["json", "csv"], default="json")
+    p = sub.add_parser("pref"); p.add_argument("key", nargs="?"); p.add_argument("value", nargs="?")
     args = parser.parse_args(argv)
-    commands = {"status": cmd_status, "list": cmd_list, "add": cmd_add, "remove": cmd_remove, "export": cmd_export}
+    commands = {"status": cmd_status, "list": cmd_list, "add": cmd_add, "remove": cmd_remove, "export": cmd_export, "pref": cmd_pref}
     try:
         con = connect()
         try:
